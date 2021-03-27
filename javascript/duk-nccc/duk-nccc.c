@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 // FIXME: We use global-stash[pointer] to keep backreference
 #include <string.h>
 #include <stdlib.h>
