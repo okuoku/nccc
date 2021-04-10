@@ -32,3 +32,10 @@ set_target_properties(node-nccc
     PREFIX ""
     SUFFIX ".node")
 
+if(NODENCCC_DEBUG_COPY)
+    add_custom_command(TARGET node-nccc POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "$<TARGET_FILE:node-nccc>"
+        "${NODENCCC_DEBUG_COPY}")
+endif()
+
