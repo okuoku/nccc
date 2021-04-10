@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.0)
 project(node-nccc C)
 
-link_directories(napi-lib)
-include_directories(napi-includes)
+set(common ../../common)
+set(napi-sdk ../../../napi-sdkfiles)
+
+link_directories(${napi-sdk}/lib-win64)
+include_directories(${napi-sdk}/include ${common})
 
 if(WIN32)
     set(dlfcn
-        win32-dlfcn.h
-        win32-dlfcn.c)
+        ${common}/win32-dlfcn.h
+        ${common}/win32-dlfcn.c)
 else()
     set(dlfcn)
 endif()
@@ -15,8 +18,8 @@ endif()
 
 add_library(node-nccc SHARED
     node-nccc.c
-    ncccutils.c
-    ncccdlfcn.c
+    ${common}/ncccutils.c
+    ${common}/ncccdlfcn.c
     ${dlfcn}
     )
 
