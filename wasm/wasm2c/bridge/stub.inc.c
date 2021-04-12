@@ -146,6 +146,8 @@ typedef void (*nccc_call_t)(const uint64_t* in, uint64_t* out);
 /* EXPORT VARIABLEs */
 #define EXP_DECL_EXPORT_VAR_obj(sym) \
     extern SYM_ ## sym ## _DATATYPE * WASM_RT_ADD_PREFIX(sym);
+#define EXP_DECL_EXPORT_VAR_val(sym) \
+    extern SYM_ ## sym ## _DATATYPE * WASM_RT_ADD_PREFIX(sym);
 #define EXP_DECL_EXPORT_VAR_table(sym) \
     EXP_DECL_EXPORT_VAR_obj(sym)
 #define EXP_DECL_EXPORT_VAR_memory(sym) \
