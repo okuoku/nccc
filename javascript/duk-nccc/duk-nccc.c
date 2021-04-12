@@ -413,7 +413,14 @@ make_nccc_cb(duk_context* ctx){
     x(util_free) \
     x(util_ptraddr) \
     x(dlfcn_open) \
-    x(dlfcn_get)
+    x(dlfcn_get) \
+    x(util_shortcircuit) \
+    x(math_cos) \
+    x(math_sin) \
+    x(math_atan2) \
+    x(math_sqrt) \
+    x(math_pow) \
+    x(math_fmodf)
 
 #define ITR_PROTOTYPE(nam) \
     void nam(const uint64_t* in, uint64_t* out);

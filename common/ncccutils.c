@@ -78,3 +78,76 @@ util_ptraddr(const uint64_t* in, uint64_t* out){
     // [addr] => [addr]
     out[0] = in[0];
 }
+
+UTILLIB_API void
+util_shortcircuit(const uint64_t* in, uint64_t* out){
+    // Short-circuit call for wasm stub
+    // [nccc-func-addr in] => dispatch
+    const nccc_call_t addr = (nccc_call_t)in[0];
+    const uint64_t* inbuf = (uintptr_t)in[1];
+
+    addr(inbuf,out);
+}
+
+/* FIXME: Move these to elsewhere */
+#include <math.h>
+
+UTILLIB_API void
+math_cos(const uint64_t* in, uint64_t* out){
+    float x;
+    float r;
+    x = *(float *)in;
+    r = cosf(x);
+    *(float *)out = r;
+}
+UTILLIB_API void
+math_sin(const uint64_t* in, uint64_t* out){
+    float x;
+    float r;
+    x = *(float *)in;
+    r = sinf(x);
+    *(float *)out = r;
+}
+UTILLIB_API void
+math_atan2(const uint64_t* in, uint64_t* out){
+    float x;
+    float y;
+    float r;
+    y = *(float *)&in[0];
+    x = *(float *)&in[1];
+    r = atan2f(y,x);
+    *(float *)out = r;
+}
+UTILLIB_API void
+math_sqrt(const uint64_t* in, uint64_t* out){
+    float x;
+    float r;
+    x = *(float *)in;
+    r = sqrtf(x);
+    *(float *)out = r;
+}
+UTILLIB_API void
+math_pow(const uint64_t* in, uint64_t* out){
+    float b;
+    float e;
+    float r;
+    b = *(float *)&in[0];
+    e = *(float *)&in[1];
+    r = powf(b,e);
+    *(float *)out = r;
+}
+UTILLIB_API void
+math_fmodf(const uint64_t* in, uint64_t* out){
+    // FIXME: https://cpprefjp.github.io/reference/cmath/fmod.html
+    float x;
+    float y;
+    float r;
+    x = *(float *)&in[0];
+    y = *(float *)&in[1];
+    r = remainder(fabs(x), (y = fabs(y)));
+    if (signbit(r)) {
+        r += y;
+    }
+    r = copysign(r, x);
+    *(float *)out = r;
+}
