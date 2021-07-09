@@ -684,6 +684,7 @@ make_nccc_cb(napi_env env, napi_callback_info info){
     x(util_rawcall) \
     x(util_peek_u64) \
     x(util_peek_u32) \
+    x(util_peek_u8) \
     x(util_peek_ptr) \
     x(util_poke_u64) \
     x(util_poke_u32) \
