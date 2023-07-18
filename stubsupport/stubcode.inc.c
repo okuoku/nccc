@@ -7,6 +7,9 @@
 #define STUBFUNC0(x,y,z)  z(x,y)
 #define STUBFUNC1(x,y) lib_ ## x ## y
 
+#include <stdint.h>
+#include <stdlib.h> /* Abort */
+
 typedef void* ptr;
 typedef uint64_t u64;
 typedef int64_t s64;
