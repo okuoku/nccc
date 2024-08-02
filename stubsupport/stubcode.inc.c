@@ -1,11 +1,25 @@
 /* Stubs */
 
+#ifdef NCCC_DLL
+#ifdef _WIN32
+#define NCCC_EXPORT __declspec(dllexport)
+#else
+#define NCCC_EXPORT __attribute__ ((visibility ("default")))
+#endif
+#else /* !NCCC_DLL = Generic static-library */
+#ifdef _WIN32
+#define NCCC_EXPORT
+#else
+#define NCCC_EXPORT __attribute__ ((visibility ("default")))
+#endif
+#endif
+
 #define STUBNAME_STR STUBNAME_STR0(STUBNAME, STUBNAME_STR1)
 #define STUBNAME_STR0(x,y) y(x)
 #define STUBNAME_STR1(x) #x
 #define STUBFUNC(x) STUBFUNC0(STUBNAME,_ ## x,STUBFUNC1)
 #define STUBFUNC0(x,y,z)  z(x,y)
-#define STUBFUNC1(x,y) lib_ ## x ## y
+#define STUBFUNC1(x,y) lib_ ## x ## y ## _ncccv0
 
 #include <stdint.h>
 #include <stdlib.h> /* Abort */
@@ -130,7 +144,7 @@ STUBFUNC(library_arg_info)(const uint64_t* in, uint64_t* out){
     }
 }
 
-void
+NCCC_EXPORT void
 STUBFUNC(dispatch)(const uint64_t* in, uint64_t* out){
     switch(in[0]){
         case 1:
