@@ -32,6 +32,10 @@ union nccv64_u {
     int64_t s64;
     uint32_t u32;
     int32_t s32;
+    uint16_t u16;
+    int16_t s16;
+    uint8_t u8;
+    int8_t s8;
     float f32;
     double f64;
 };
@@ -117,6 +121,12 @@ STUBFUNC(library_export_info)(const nccv64* in, nccv64* out){
 #define CITYPE_VALUE_s32 4
 #define CITYPE_VALUE_s64 5
 #define CITYPE_VALUE_ptr 6
+#define CITYPE_VALUE_uptr 7
+#define CITYPE_VALUE_sptr 8
+#define CITYPE_VALUE_u8 9
+#define CITYPE_VALUE_u16 10
+#define CITYPE_VALUE_s8 11
+#define CITYPE_VALUE_s16 12
 
 #define ITR_ARG_INFO_F0_ARG(offs,_,typ) \
     out[3+offs].s32 = CITYPE_VALUE_ ## typ;
