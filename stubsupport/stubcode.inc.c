@@ -69,6 +69,7 @@ typedef union nccv64_u nccv64;
 
 #define STUB_F0_void_ret(sym) \
     void stub_ ## sym(const nccv64* in, nccv64* out){ \
+        (void)in; \
         out->STUB_RET_TYPE(sym) = sym(); \
     }
 
@@ -84,6 +85,7 @@ FORWARD_0_STUB_EXPAND(ITR_F0_STUBS)
 
 static void 
 STUBFUNC(library_info)(const nccv64* in, nccv64* out){
+    (void)in;
     out[0].ptr = STUBNAME_STR;
     out[1].u64 = 0;
     out[2].s32 = FORWARD_0_STUB_COUNT;
@@ -99,7 +101,7 @@ STUBFUNC(library_info)(const nccv64* in, nccv64* out){
       out[2].ptr = #sym; \
       out[3].s32 = 0; /* FORWARD_0 */ \
       out[4].s32 = 0; /* Direct call */ \
-      out[5].ptr = stub_ ## sym; \
+      out[5].ptr = (void*)stub_ ## sym; \
       out[6].s32 = SYM_ ## sym ## _ARG_COUNT; \
       out[7].s32 = SYM_ ## sym ## _RET_COUNT; \
       return;
