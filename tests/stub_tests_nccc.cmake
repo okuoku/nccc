@@ -1,0 +1,51 @@
+nccc_stub_begin(tests_nccc)
+
+# Pointer
+nccc_api(test_retptr_nil IN OUT ptr)
+nccc_api(test_retptr_msg IN OUT ptr)
+nccc_api(test_retptr_nilstr IN OUT ptr)
+nccc_api(test_retptr_u32seq IN OUT ptr)
+nccc_api(test_retptr_u64seq IN OUT ptr)
+
+# Integral
+nccc_api(test_ret10_u32 IN OUT u32)
+nccc_api(test_ret10_s32 IN OUT s32)
+nccc_api(test_retm10_s32 IN OUT s32)
+nccc_api(test_ret10_u64 IN OUT u64)
+nccc_api(test_ret10_s64 IN OUT s64)
+nccc_api(test_retm10_s64 IN OUT s64)
+nccc_api(test_retMAX_u32 IN OUT u32)
+nccc_api(test_retMAX_s32 IN OUT s32)
+nccc_api(test_retMAX_u64 IN OUT u64)
+nccc_api(test_retMAX_s64 IN OUT s64)
+nccc_api(test_retMIN_s32 IN OUT s32)
+nccc_api(test_retMIN_s64 IN OUT s64)
+nccc_api(test_retMAX_uptr IN OUT uptr)
+nccc_api(test_retMAX_sptr IN OUT sptr)
+nccc_api(test_retMIN_sptr IN OUT sptr)
+
+# Floating point
+nccc_api(test_ret10_f32 IN OUT f32)
+nccc_api(test_retm10_f32 IN OUT f32)
+nccc_api(test_ret10_f64 IN OUT f64)
+nccc_api(test_retm10_f64 IN OUT f64)
+nccc_api(test_retMAX_f32 IN OUT f32)
+nccc_api(test_retMIN_f32 IN OUT f32)
+nccc_api(test_retMAX_f64 IN OUT f64)
+nccc_api(test_retMIN_f64 IN OUT f64)
+nccc_api(test_retHUGE_f32 IN OUT f32)
+nccc_api(test_retHUGE_f64 IN OUT f64)
+nccc_api(test_retNAN_f32 IN OUT f32)
+nccc_api(test_retNAN_f64 IN OUT f64)
+nccc_api(test_retmzero_f32 IN OUT f32)
+nccc_api(test_retmzero_f64 IN OUT f64)
+
+# args
+nccc_api(test_argprint_s32_4 IN s32 s32 s32 s32 ptr uptr OUT)
+nccc_api(test_argprint_s64_4 IN s64 s64 s64 s64 ptr uptr OUT)
+nccc_api(test_argprint_f32_4 IN f32 f32 f32 f32 ptr uptr OUT)
+nccc_api(test_argprint_f64_4 IN f64 f64 f64 f64 ptr uptr OUT)
+nccc_api(test_argprint_mix_4 IN s32 s64 f32 f64 ptr uptr OUT)
+nccc_api(test_argsum_mix_4_f64 IN s32 s64 f32 f64 OUT f64)
+
+nccc_stub_end(tests_nccc)
