@@ -1,19 +1,5 @@
 /* Stubs */
 
-#ifdef NCCC_DLL
-#ifdef _WIN32
-#define NCCC_EXPORT __declspec(dllexport)
-#else
-#define NCCC_EXPORT __attribute__ ((visibility ("default")))
-#endif
-#else /* !NCCC_DLL = Generic static-library */
-#ifdef _WIN32
-#define NCCC_EXPORT
-#else
-#define NCCC_EXPORT __attribute__ ((visibility ("default")))
-#endif
-#endif
-
 #define STUBNAME_STR STUBNAME_STR0(STUBNAME, STUBNAME_STR1)
 #define STUBNAME_STR0(x,y) y(x)
 #define STUBNAME_STR1(x) #x
@@ -24,23 +10,8 @@
 #include <stdint.h>
 #include <stdlib.h> /* Abort */
 
-union nccv64_u {
-    void* ptr;
-    uintptr_t uptr;
-    intptr_t sptr;
-    uint64_t u64;
-    int64_t s64;
-    uint32_t u32;
-    int32_t s32;
-    uint16_t u16;
-    int16_t s16;
-    uint8_t u8;
-    int8_t s8;
-    float f32;
-    double f64;
-};
-
-typedef union nccv64_u nccv64;
+#include "ncccexport.h"
+#include "nccv64.h"
 
 #define EXP_COMMA_arg ,
 #define EXP_COMMA_term
