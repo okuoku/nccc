@@ -15,49 +15,96 @@ nccc_memcpy(void* to, const void* from, uintptr_t size){
 
 /* Dispatch OP */
 static void
-nccc_dispatch_N(const nccv64* op, nccv64* out, int n, void** p){
-    uintptr_t reg;
-    nccv64* src;
-    nccv64* tgt;
+regcheck(int r){
+    if(r < 0){
+        abort();
+    }
+    if(r >= NCCC_DISPATCH_STACK_DEPTH){
+        abort();
+    }
+}
+static void
+nccc_dispatch_N(const nccv64* op, nccv64* reg){
     const nccv64* ip = op;
+    nccv64* mem;
+    int src, srcb, offs;
+    int dest;
     void (*func)(const nccv64* in, nccv64* out);
     for(;;){
         switch(ip[0].s32){
             case NCCC_DISPATCH_OP_RETURN:
                 return;
-            case NCCC_DISPATCH_OP_MOV:
-                src = ip[1].ptr;
-                tgt = ip[2].ptr;
-                *tgt = *src;
+            case NCCC_DISPATCH_OP_REGADDR: /* [1 rBASE rOUT] */
+                src = ip[1].s32;
+                dest = ip[2].s32;
+                regcheck(src);
+                regcheck(dest);
+                reg[dest].ptr = &reg[src];
                 ip = &ip[3];
                 break;
-            case NCCC_DISPATCH_OP_MOVPTR:
-                reg = ip[1].uptr;
-                tgt = ip[2].ptr;
-                if(reg >= n){
-                    abort();
-                }
-                tgt[0].ptr = p[reg];
-                ip = &ip[3];
-                break;
-            case NCCC_DISPATCH_OP_CALL:
-                func = ip[1].ptr;
-                src = ip[2].ptr;
-                tgt = ip[3].ptr;
-                func(src, tgt);
+            case NCCC_DISPATCH_OP_ADD:     /* [2 rIN1 rIN2 rOUT] */
+                src = ip[1].s32;
+                srcb = ip[2].s32;
+                dest = ip[3].s32;
+                regcheck(src);
+                regcheck(srcb);
+                regcheck(dest);
+                /* Use unsigned for wrapping addition */
+                reg[dest].uptr = reg[src].uptr + reg[srcb].uptr;
                 ip = &ip[4];
                 break;
-            case NCCC_DISPATCH_OP_JMP:
-                ip = ip[1].ptr;
+            case NCCC_DISPATCH_OP_LDC:     /* [3 const rOUT] */
+                dest = ip[2].s32;
+                reg[dest] = ip[1];
+                regcheck(dest);
+                ip = &ip[3];
                 break;
-            case NCCC_DISPATCH_OP_JNZ:
-                reg = ip[1].uptr;
-                if(reg == 0){
-                    ip = &ip[3];
+            case NCCC_DISPATCH_OP_LD: /* [4 rBASE offs rDEST] */
+                src = ip[1].s32;
+                offs = ip[2].s32;
+                dest = ip[3].s32;
+                mem = reg[src].ptr;
+                reg[dest] = mem[offs];
+                ip = &ip[4];
+                break;
+            case NCCC_DISPATCH_OP_ST: /* [5 rBASE offs rIN] */
+                dest = ip[1].s32;
+                offs = ip[2].s32;
+                src = ip[3].s32;
+                mem = reg[src].ptr;
+                mem[offs] = reg[src];
+                ip = &ip[4];
+                break;
+            case NCCC_DISPATCH_OP_MOV:     /* [6 rFROM rTO] */
+                src = ip[1].s32;
+                dest = ip[2].s32;
+                regcheck(src);
+                regcheck(dest);
+                reg[dest] = reg[src];
+                ip = &ip[3];
+                break;
+            case NCCC_DISPATCH_OP_CALL:    /* [7 rFUNC rINBUF rOUTBUF] */
+                src = ip[1].s32;
+                srcb = ip[2].s32;
+                dest = ip[3].s32;
+                regcheck(src);
+                regcheck(srcb);
+                regcheck(dest);
+                func = reg[src].ptr;
+                func(reg[srcb].ptr, reg[dest].ptr);
+                ip = &ip[4];
+                break;
+            case NCCC_DISPATCH_OP_JMP: /* [8 imm] */
+                offs = ip[1].s32;
+                ip = &ip[offs];
+            case NCCC_DISPATCH_OP_JNZ: /* [9 rIN imm] */
+                src = ip[1].s32;
+                offs = ip[2].s32;
+                if(reg[src].s32 != 0){
+                    ip = &ip[offs];
                 }else{
-                    ip = ip[2].ptr;
+                    ip = &ip[3];
                 }
-                break;
             default:
                 abort();
                 break;
@@ -65,84 +112,83 @@ nccc_dispatch_N(const nccv64* op, nccv64* out, int n, void** p){
     }
 }
 
-
 /* Exports */
 NCCC_EXPORT void
-nccc_dispatch_0(const nccv64* op, nccv64* out){
-    nccc_dispatch_N(op, out, 0, 0);
+nccc_dispatch_0(const nccv64* op){
+    nccv64 p[NCCC_DISPATCH_STACK_DEPTH];
+    nccc_dispatch_N(op, p);
 }
 
 NCCC_EXPORT void 
-nccc_dispatch_1(const nccv64* op, nccv64* out, void* p0){
-    void* p[1];
-    p[0] = p0;
-    nccc_dispatch_N(op, out, 1, p);
+nccc_dispatch_1(const nccv64* op, void* p0){
+    nccv64 p[NCCC_DISPATCH_STACK_DEPTH];
+    p[0].ptr = p0;
+    nccc_dispatch_N(op, p);
 }
 
 NCCC_EXPORT void 
-nccc_dispatch_2(const nccv64* op, nccv64* out, void* p0, void* p1){
-    void* p[2];
-    p[0] = p0;
-    p[1] = p1;
-    nccc_dispatch_N(op, out, 2, p);
+nccc_dispatch_2(const nccv64* op, void* p0, void* p1){
+    nccv64 p[NCCC_DISPATCH_STACK_DEPTH];
+    p[0].ptr = p0;
+    p[1].ptr = p1;
+    nccc_dispatch_N(op, p);
 }
 
 NCCC_EXPORT void 
-nccc_dispatch_3(const nccv64* op, nccv64* out, void* p0, void* p1, void* p2){
-    void* p[3];
-    p[0] = p0;
-    p[1] = p1;
-    p[2] = p2;
-    nccc_dispatch_N(op, out, 3, p);
+nccc_dispatch_3(const nccv64* op, void* p0, void* p1, void* p2){
+    nccv64 p[NCCC_DISPATCH_STACK_DEPTH];
+    p[0].ptr = p0;
+    p[1].ptr = p1;
+    p[2].ptr = p2;
+    nccc_dispatch_N(op, p);
 }
 
 NCCC_EXPORT void 
-nccc_dispatch_4(const nccv64* op, nccv64* out, void* p0, void* p1, void* p2, 
-                void* p3){
-    void* p[4];
-    p[0] = p0;
-    p[1] = p1;
-    p[2] = p2;
-    p[3] = p3;
-    nccc_dispatch_N(op, out, 4, p);
+nccc_dispatch_4(const nccv64* op, void* p0, void* p1, void* p2, void* p3){
+    nccv64 p[NCCC_DISPATCH_STACK_DEPTH];
+    p[0].ptr = p0;
+    p[1].ptr = p1;
+    p[2].ptr = p2;
+    p[3].ptr = p3;
+    nccc_dispatch_N(op, p);
 }
 
 NCCC_EXPORT void 
-nccc_dispatch_5(const nccv64* op, nccv64* out, void* p0, void* p1, void* p2, 
-                void* p3, void* p4){
-    void* p[5];
-    p[0] = p0;
-    p[1] = p1;
-    p[2] = p2;
-    p[3] = p3;
-    p[4] = p4;
-    nccc_dispatch_N(op, out, 5, p);
+nccc_dispatch_5(const nccv64* op, void* p0, void* p1, void* p2, void* p3, 
+                void* p4){
+    nccv64 p[NCCC_DISPATCH_STACK_DEPTH];
+    p[0].ptr = p0;
+    p[1].ptr = p1;
+    p[2].ptr = p2;
+    p[3].ptr = p3;
+    p[4].ptr = p4;
+    nccc_dispatch_N(op, p);
 }
 
 NCCC_EXPORT void 
-nccc_dispatch_6(const nccv64* op, nccv64* out, void* p0, void* p1, void* p2, 
-                void* p3, void* p4, void* p5){
-    void* p[6];
-    p[0] = p0;
-    p[1] = p1;
-    p[2] = p2;
-    p[3] = p3;
-    p[4] = p4;
-    p[5] = p5;
-    nccc_dispatch_N(op, out, 6, p);
+nccc_dispatch_6(const nccv64* op, void* p0, void* p1, void* p2, void* p3, 
+                void* p4, void* p5){
+    nccv64 p[NCCC_DISPATCH_STACK_DEPTH];
+    p[0].ptr = p0;
+    p[1].ptr = p1;
+    p[2].ptr = p2;
+    p[3].ptr = p3;
+    p[4].ptr = p4;
+    p[5].ptr = p5;
+    nccc_dispatch_N(op, p);
 }
 
 NCCC_EXPORT void 
-nccc_dispatch_7(const nccv64* op, nccv64* out, void* p0, void* p1, void* p2, 
-                void* p3, void* p4, void* p5, void* p6){
-    void* p[7];
-    p[0] = p0;
-    p[1] = p1;
-    p[2] = p2;
-    p[3] = p3;
-    p[4] = p4;
-    p[5] = p5;
-    p[6] = p6;
-    nccc_dispatch_N(op, out, 7, p);
+nccc_dispatch_7(const nccv64* op, void* p0, void* p1, void* p2, void* p3, 
+                void* p4, void* p5, void* p6){
+    nccv64 p[NCCC_DISPATCH_STACK_DEPTH];
+    p[0].ptr = p0;
+    p[1].ptr = p1;
+    p[2].ptr = p2;
+    p[3].ptr = p3;
+    p[4].ptr = p4;
+    p[5].ptr = p5;
+    p[6].ptr = p6;
+    nccc_dispatch_N(op, p);
 }
 
