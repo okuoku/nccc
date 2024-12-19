@@ -1,13 +1,16 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.13)
 project(node-nccc C)
 
 set(common ../../common)
-set(napi-sdk ../../../napi-sdkfiles)
+set(napi-sdk ../../../ext/nccc/napi-sdkfiles)
 
-link_directories(${napi-sdk}/lib-win64)
-include_directories(${napi-sdk}/include ${common})
+include_directories(${napi-sdk}/include ${common}
+    ../../stubsupport)
+
+add_definitions(-DNAPI_VERSION=4)
 
 if(WIN32)
+    link_directories(${napi-sdk}/lib-win64)
     set(dlfcn
         ${common}/win32-dlfcn.h
         ${common}/win32-dlfcn.c)
@@ -23,8 +26,13 @@ add_library(node-nccc SHARED
     ${dlfcn}
     )
 
+# Link settings
 if(WIN32)
     target_link_libraries(node-nccc node)
+elseif(APPLE)
+    # Ignore any undefined
+    target_link_options(node-nccc PRIVATE
+        -Wl,-undefined,dynamic_lookup)
 endif()
 
 set_target_properties(node-nccc
