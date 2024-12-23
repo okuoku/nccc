@@ -40,10 +40,17 @@ set_target_properties(node-nccc
     PREFIX ""
     SUFFIX ".node")
 
-if(NODENCCC_DEBUG_COPY)
+if(NCCC_DEBUG_NODE_MODULES)
+    if(NCCC_DEBUG_MODULES_PREFIX)
+        message(STATUS "prefix: ${NCCC_DEBUG_MODULES_PREFIX}")
+    else()
+        message(FATAL_ERROR "no modules prefix")
+    endif()
     add_custom_command(TARGET node-nccc POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         "$<TARGET_FILE:node-nccc>"
-        "${NODENCCC_DEBUG_COPY}")
+        "${NCCC_DEBUG_NODE_MODULES}/node-nccc.node")
+    configure_file(nccc-debug-prefix.mjs.in
+        ${NCCC_DEBUG_NODE_MODULES}/nccc-debug-prefix.mjs @ONLY)
 endif()
 
