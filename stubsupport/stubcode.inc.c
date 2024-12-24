@@ -87,19 +87,19 @@ STUBFUNC(library_export_info)(const nccv64* in, nccv64* out){
     }
 }
 
-#define CITYPE_VALUE_u32 0
-#define CITYPE_VALUE_u64 1
-#define CITYPE_VALUE_f32 2
-#define CITYPE_VALUE_f64 3
-#define CITYPE_VALUE_s32 4
-#define CITYPE_VALUE_s64 5
-#define CITYPE_VALUE_ptr 6
-#define CITYPE_VALUE_uptr 7
-#define CITYPE_VALUE_sptr 8
-#define CITYPE_VALUE_u8 9
-#define CITYPE_VALUE_u16 10
-#define CITYPE_VALUE_s8 11
-#define CITYPE_VALUE_s16 12
+#define CITYPE_VALUE_u32 0  /* I */
+#define CITYPE_VALUE_u64 1  /* L */
+#define CITYPE_VALUE_f32 2  /* f */
+#define CITYPE_VALUE_f64 3  /* d */
+#define CITYPE_VALUE_s32 4  /* i */
+#define CITYPE_VALUE_s64 5  /* l */
+#define CITYPE_VALUE_ptr 6  /* p */
+#define CITYPE_VALUE_uptr 7 /* X */
+#define CITYPE_VALUE_sptr 8 /* x */
+#define CITYPE_VALUE_u8 9   /* B */
+#define CITYPE_VALUE_u16 10 /* H */
+#define CITYPE_VALUE_s8 11  /* b */
+#define CITYPE_VALUE_s16 12 /* h */
 
 #define ITR_ARG_INFO_F0_ARG(offs,_,typ) \
     out[3+offs].s32 = CITYPE_VALUE_ ## typ;

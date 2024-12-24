@@ -17,6 +17,11 @@ value_in(napi_env env, napi_value* vout, char type, uint64_t vin){
     status = napi_invalid_arg;
     switch(type){
         case 'i':
+        case 'I':
+        case 'b':
+        case 'B':
+        case 'h':
+        case 'H':
             status = napi_create_int32(env, vin, vout);
             break;
         case 'l':
@@ -86,9 +91,18 @@ value_out(napi_env env, uint64_t* vout, char type, napi_value vin){
     napi_value strbuf;
     size_t strbuflen;
     void* strbufptr;
+    /* Short circuit for Number types */
     switch(type){
         case 'i':
         case 'l':
+        case 'I':
+        case 'L':
+        case 'x':
+        case 'X':
+        case 'b':
+        case 'B':
+        case 'h':
+        case 'H':
         case 'p':
             status = napi_get_value_int64(env, vin, (int64_t*)vout);
             break;
@@ -596,6 +610,7 @@ make_nccc_cb(napi_env env, napi_callback_info info){
     //         'p' : pointer
     //         'f' : float
     //         'd' : double
+    //         ... (and others)
     char typestringbuf[40];
     size_t typestringlen = 0;
     napi_status status;
