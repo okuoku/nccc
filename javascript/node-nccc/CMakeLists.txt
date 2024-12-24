@@ -50,7 +50,7 @@ if(NCCC_DEBUG_NODE_MODULES)
         COMMAND ${CMAKE_COMMAND} -E copy
         "$<TARGET_FILE:node-nccc>"
         "${NCCC_DEBUG_NODE_MODULES}/node-nccc.node")
-    configure_file(nccc-debug-prefix.mjs.in
-        ${NCCC_DEBUG_NODE_MODULES}/nccc-debug-prefix.mjs @ONLY)
+    configure_file(nccc-debug-prefix.js.in
+        ${NCCC_DEBUG_NODE_MODULES}/nccc-debug-prefix.js @ONLY)
 endif()
 
