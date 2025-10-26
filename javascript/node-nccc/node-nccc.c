@@ -334,7 +334,8 @@ nccc_call_trampoline(napi_env env, napi_callback_info info){
 
     argc = 0;
     /* Pass1: Collect ctx */
-    status = napi_get_cb_info(env, info, &argc, NULL, &ctx_this, &ctx);
+    status = napi_get_cb_info(env, info, &argc, NULL, &ctx_this, 
+                              (void*)&ctx);
     if(status != napi_ok){
         abort();
     }
@@ -342,7 +343,8 @@ nccc_call_trampoline(napi_env env, napi_callback_info info){
     /* Pass2: Fill argument */
     argc = ctx->incount;
     argbuf = alloca(sizeof(napi_value)*ctx->incount);
-    status = napi_get_cb_info(env, info, &argc, argbuf, &ctx_this, &ctx);
+    status = napi_get_cb_info(env, info, &argc, argbuf, &ctx_this, 
+                              (void*)&ctx);
     if(status != napi_ok){
         abort();
     }
