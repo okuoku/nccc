@@ -10,7 +10,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/stub_tests_nccc.cmake)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${NCCC_ROOT}/stubsupport)
 
-if(YFRM_BUILD_MODULE) # FIXME: NCCC..?
+if(BUILD_NCCC_MODULE)
     set(libtype MODULE)
 else()
     set(libtype STATIC)

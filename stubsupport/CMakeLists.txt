@@ -16,7 +16,7 @@ nccc_api(nccc_dispatch_6 IN ptr ptr ptr ptr ptr ptr ptr OUT)
 nccc_api(nccc_dispatch_7 IN ptr ptr ptr ptr ptr ptr ptr ptr OUT)
 nccc_stub_end(nccc_corelib)
 
-if(YFRM_BUILD_MODULE)
+if(BUILD_NCCC_MODULE)
     add_definitions(-DNCCC_DLL)
     set(libtype MODULE)
 else()
