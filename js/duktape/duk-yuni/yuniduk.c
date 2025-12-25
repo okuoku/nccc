@@ -10,9 +10,10 @@
 
 void dukregisternccc(duk_context* ctx);
 
+/* Debug print for DUK_USE_DEBUG_WRITE */
 void
 dukdebugwrite(long level, const char* file, long line, const char* func, const char* msg){
-    fprintf(stderr, "D%ld %s:%d (%s): %s\n", level, file, line, func, msg);
+    fprintf(stderr, "D%ld %s:%ld (%s): %s\n", level, file, line, func, msg);
 }
 
 static duk_ret_t
