@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include "duktape.h"
 
+#include "nccv64.h"
+
 #ifdef WIN32
 #include <malloc.h>
 #else
@@ -11,22 +13,22 @@
 #endif
 
 static void
-value_in(duk_context* ctx, char type, uint64_t vin){
+value_in(duk_context* ctx, char type, nccv64 vin){
     switch(type){
         case 'i':
-            duk_push_int(ctx, (int32_t)vin);
+            duk_push_int(ctx, vin.s32);
             break;
         case 'l':
-            duk_push_number(ctx, (int64_t)vin);
+            duk_push_number(ctx, vin.s64);
             break;
         case 'p':
-            duk_push_pointer(ctx, (intptr_t)vin);
+            duk_push_pointer(ctx, vin.ptr);
             break;
         case 'f':
-            duk_push_number(ctx, *((float *)&vin));
+            duk_push_number(ctx, vin.f32);
             break;
         case 'd':
-            duk_push_number(ctx, *((double *)&vin));
+            duk_push_number(ctx, vin.f64);
             break;
         default:
             /* Unknown type */
@@ -36,22 +38,22 @@ value_in(duk_context* ctx, char type, uint64_t vin){
 }
 
 static int // => bool
-get_pointer(duk_context* ctx, duk_idx_t v, uintptr_t* value){
+get_pointer(duk_context* ctx, duk_idx_t v, nccv64* value){
     if(duk_is_pointer(ctx, v)){
-        *value = duk_require_pointer(ctx, v);
+        value->ptr = duk_require_pointer(ctx, v);
         return 1;
     }else if(duk_is_buffer_data(ctx, v)){
-        *value = duk_get_buffer_data(ctx, v, NULL);
+        value->ptr = duk_get_buffer_data(ctx, v, NULL);
         return 1;
     }else if(duk_is_string(ctx, v)){
-        *value = duk_require_string(ctx, v);
+        value->ptr = (void*)duk_require_string(ctx, v);
         return 1;
     }else if(duk_is_object(ctx, v)){
         /* Pointer with finalizer */
         (void)duk_get_prop_index(ctx, v, 0);
-        *value = duk_get_pointer(ctx, -1);
+        value->ptr = duk_get_pointer(ctx, -1);
         duk_pop(ctx);
-        if(*value){
+        if(value->ptr){
             return 1;
         }else{
             return 0;
@@ -62,42 +64,58 @@ get_pointer(duk_context* ctx, duk_idx_t v, uintptr_t* value){
 }
 
 static void
-value_out(duk_context* ctx, uint64_t* out, char type, duk_idx_t vin){
+value_out(duk_context* ctx, nccv64* out, char type, duk_idx_t vin){
     int altfill = 0;
-    uintptr_t v;
+    nccv64 v;
     if(duk_is_null_or_undefined(ctx, vin)){
         altfill = 1;
-        v = 0;
+        v.s64 = 0;
     }else if(duk_is_boolean(ctx, vin)){
         altfill = 1;
-        v = duk_require_boolean(ctx, vin) ? 1 : 0;
+        v.s64 = duk_require_boolean(ctx, vin) ? 1 : 0;
     }
 
     /* numberlike */
     switch(type){
         case 'p':
+            if(altfill){
+                out->sptr = v.s64;
+            }else if(get_pointer(ctx, vin, &v)){
+                out->sptr = v.s64;
+            }else{
+                out->sptr = duk_require_number(ctx, vin);
+            }
+            break;
         case 'i':
+            if(altfill){
+                out->s32 = v.s64;
+            }else if(get_pointer(ctx, vin, &v)){
+                out->s32 = v.s64;
+            }else{
+                out->s32 = duk_require_number(ctx, vin);
+            }
+            break;
         case 'l':
             if(altfill){
-                *out = v;
+                out->s64 = v.s64;
             }else if(get_pointer(ctx, vin, &v)){
-                *out = v;
+                out->s64 = v.s64;
             }else{
-                *out = (int64_t)duk_require_number(ctx, vin);
+                out->s64 = (int64_t)duk_require_number(ctx, vin);
             }
             break;
         case 'f':
             if(altfill){
-                *(float *)out = v;
+                out->f32 = v.s64;
             }else{
-                *(float *)out = duk_require_number(ctx, vin);
+                out->f32 = duk_require_number(ctx, vin);
             }
             break;
         case 'd':
             if(altfill){
-                *(double *)out = v;
+                out->f64 = v.s64;
             }else{
-                *(double *)out = duk_require_number(ctx, vin);
+                out->f64 = duk_require_number(ctx, vin);
             }
             break;
         default:
@@ -106,12 +124,12 @@ value_out(duk_context* ctx, uint64_t* out, char type, duk_idx_t vin){
     }
 }
 
-typedef void (*nccc_call_t)(const uint64_t* in, uint64_t* out);
+typedef void (*nccc_call_t)(const nccv64* in, nccv64* out);
 
 struct finalizer_params_s {
-    uint64_t dispatch;
-    uint64_t ctx;
-    uint64_t arg;
+    nccv64 dispatch;
+    nccv64 ctx;
+    nccv64 arg;
 };
 
 typedef struct finalizer_params_s finalizer_params_t;
@@ -119,23 +137,23 @@ typedef struct finalizer_params_s finalizer_params_t;
 static duk_ret_t
 do_finalize(duk_context* ctx){
     nccc_call_t fn;
-    uint64_t in0[2];
-    uint64_t in1[2];
-    uintptr_t v;
+    nccv64 in0[2];
+    nccv64 in1[2];
+    void* v;
     finalizer_params_t* params;
     (void)duk_get_prop_index(ctx, 0, 1);
     params = duk_get_pointer(ctx, -1);
     (void)duk_get_prop_index(ctx, 0, 0);
     v = duk_get_pointer(ctx, -1);
-    in0[0] = params->arg;
-    in0[1] = (uint64_t)v;
-    if(params->dispatch){
-        fn = (nccc_call_t)params->dispatch;
+    in0[0].ptr = params->arg.ptr;
+    in0[1].ptr = v;
+    if(params->dispatch.sptr){
+        fn = (nccc_call_t)params->dispatch.ptr;
         in1[0] = params->ctx;
-        in1[1] = (uint64_t)in0;
+        in1[1].ptr = in0;
         fn(in1, NULL);
     }else{
-        fn = (nccc_call_t)params->ctx;
+        fn = (nccc_call_t)params->ctx.ptr;
         fn(in0, NULL);
     }
     free(params);
@@ -148,7 +166,7 @@ wrap_pointer(duk_context* ctx){
     // [ptr dispatch ctx arg] => ptr
     //   [dispatch,ctx] = [arg ptr] => []
     finalizer_params_t* params;
-    uint64_t ptr;
+    nccv64 ptr;
     params = malloc(sizeof(finalizer_params_t));
     if(!params){
         abort();
@@ -160,7 +178,7 @@ wrap_pointer(duk_context* ctx){
     duk_push_object(ctx);
     duk_push_c_function(ctx, do_finalize, 1);
     duk_set_finalizer(ctx, -2);
-    duk_push_pointer(ctx, ptr);
+    duk_push_pointer(ctx, ptr.ptr);
     duk_put_prop_index(ctx, -2, 0);
     duk_push_pointer(ctx, params);
     duk_put_prop_index(ctx, -2, 1);
@@ -169,13 +187,13 @@ wrap_pointer(duk_context* ctx){
 }
 
 struct cb_params_s {
-    char* intypes;
-    char* outtypes;
+    const char* intypes;
+    const char* outtypes;
     size_t incount;
     size_t outcount;
     /* For nccc_call */
-    uint64_t addr;
-    uint64_t dispatch;
+    nccv64 addr;
+    nccv64 dispatch;
     /* For nccc_cb */
     duk_context* ctx;
 };
@@ -185,34 +203,34 @@ typedef struct cb_params_s cb_params_t;
 static duk_ret_t
 destroy_cb_ctx(duk_context* ctx){
     // [params] => undefined
-    uint64_t ptr;
+    nccv64 ptr;
     value_out(ctx, &ptr, 'p', 0);
     /* Remove params from Global stash */
     duk_push_global_stash(ctx);
-    duk_del_prop_index(ctx, -1, ptr);
-    free((cb_params_t*)(uintptr_t)ptr);
+    duk_del_prop_index(ctx, -1, ptr.uptr);
+    free((cb_params_t*)ptr.ptr);
     return 0;
 }
 
 static duk_ret_t
 nccc_call_trampoline(duk_context* ctx){
     int i;
-    uint64_t* inbuf;
-    uint64_t* outbuf;
+    nccv64* inbuf;
+    nccv64* outbuf;
     nccc_call_t fn;
     cb_params_t* params;
     duk_push_current_function(ctx);
     (void)duk_get_prop_index(ctx, -1, 0);
     params = duk_require_pointer(ctx, -1);
 
-    if(params->dispatch){
-        inbuf = alloca(sizeof(uint64_t)*(params->incount+1));
+    if(params->dispatch.sptr){
+        inbuf = alloca(sizeof(nccv64)*(params->incount+1));
     }else{
-        inbuf = alloca(sizeof(uint64_t)*params->incount);
+        inbuf = alloca(sizeof(nccv64)*params->incount);
     }
-    outbuf = alloca(sizeof(uint64_t)*params->outcount);
+    outbuf = alloca(sizeof(nccv64)*params->outcount);
     /* Setup arguments */
-    if(params->dispatch){
+    if(params->dispatch.sptr){
         inbuf[0] = params->addr;
         for(i=0;i!=params->incount;i++){
             value_out(ctx,&inbuf[i+1],params->intypes[i],i);
@@ -224,10 +242,10 @@ nccc_call_trampoline(duk_context* ctx){
     }
 
     /* Call */
-    if(params->dispatch){
-        fn = (nccc_call_t)params->dispatch;
+    if(params->dispatch.sptr){
+        fn = (nccc_call_t)params->dispatch.ptr;
     }else{
-        fn = (nccc_call_t)params->addr;
+        fn = (nccc_call_t)params->addr.ptr;
     }
 
     /* No need to handle exception here.
@@ -253,8 +271,8 @@ nccc_call_trampoline(duk_context* ctx){
 
 static void
 free_cb_params(cb_params_t* p){
-    free(p->intypes);
-    free(p->outtypes);
+    free((void*)p->intypes);
+    free((void*)p->outtypes);
     free(p);
 }
 
@@ -315,13 +333,13 @@ make_nccc_call(duk_context* ctx){
 }
 
 static void
-nccc_cb_dispatcher(const uint64_t* in, uint64_t* out){
+nccc_cb_dispatcher(const nccv64* in, nccv64* out){
     // [params inaddr] => (dispatch)
     // Native to JavaScript bridge
 
     duk_context* ctx;
-    cb_params_t* params = (cb_params_t*)(uintptr_t)in[0];
-    const uint64_t* in_next = (uint64_t*)(uintptr_t)in[1];
+    cb_params_t* params = (cb_params_t*)in[0].ptr;
+    const nccv64* in_next = (nccv64*)in[1].ptr;
     int i;
     char outtypes[33];
     int outcount;
@@ -329,7 +347,7 @@ nccc_cb_dispatcher(const uint64_t* in, uint64_t* out){
     ctx = params->ctx;
     /* Function */
     duk_push_global_stash(ctx);
-    (void)duk_get_prop_index(ctx, -1, in[0]);
+    (void)duk_get_prop_index(ctx, -1, in[0].uptr);
     if(!duk_is_function(ctx, -1)){
         abort();
     }
@@ -383,8 +401,8 @@ make_nccc_cb(duk_context* ctx){
     params->outtypes = dukstrdup(ctx, 2);
     (void)duk_require_lstring(ctx, 1, &params->incount);
     (void)duk_require_lstring(ctx, 2, &params->outcount);
-    params->dispatch = 0;
-    params->addr = 0;
+    params->dispatch.ptr = 0;
+    params->addr.ptr = 0;
     params->ctx = ctx;
 
     /* retain callback */
