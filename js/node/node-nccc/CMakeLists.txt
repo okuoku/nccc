@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.20)
 project(node-nccc C)
 
-set(common ../../common)
-set(napi-sdk ../../../ext/nccc/napi-sdkfiles)
+cmake_path(SET reporoot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/../../..)
 
-include_directories(${napi-sdk}/include ${common}
-    ../../stubsupport)
+cmake_path(SET common NORMALIZE ${reporoot}/common)
+cmake_path(SET napi-sdk NORMALIZE ${reporoot}/../ext/js/node-api-headers)
+cmake_path(SET stubsupport NORMALIZE ${reporoot}/stubsupport)
+
+include_directories(${napi-sdk}/include ${common} ${stubsupport})
 
 add_definitions(-DNAPI_VERSION=4)
 
