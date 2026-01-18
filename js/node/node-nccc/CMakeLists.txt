@@ -11,8 +11,37 @@ include_directories(${napi-sdk}/include ${common} ${stubsupport})
 
 add_definitions(-DNAPI_VERSION=4)
 
+function(gen_implib)
+    cmake_path(SET def NORMALIZE ${napi-sdk}/def/node_api.def)
+    cmake_path(NATIVE_PATH def defN)
+    if(MSVC)
+        if(NOT DEFINED CMAKE_EXE_LINKER_FLAGS)
+            message(FATAL_ERROR "???")
+        endif()
+        cmake_path(SET implib NORMALIZE ${CMAKE_CURRENT_BINARY_DIR}/node.lib)
+        cmake_path(NATIVE_PATH implib implibN)
+        add_custom_command(OUTPUT ${implib}
+            COMMAND lib.exe /def:${defN} ${CMAKE_EXE_LINKER_FLAGS} /out:${implibN})
+    else() 
+        if(NOT DEFINED CMAKE_DLLTOOL)
+            message(FATAL_ERROR "CMAKE_DLLTOOL is not defined")
+        endif()
+        # MinGW(binutils)
+        cmake_path(SET implib NORMALIZE ${CMAKE_CURRENT_BINARY_DIR}/node.exe.a)
+        cmake_path(NATIVE_PATH implib implibN)
+        add_custom_command(OUTPUT ${implib}
+            COMMAND ${CMAKE_DLLTOOL} -d ${defN} -D node.exe -l ${implibN})
+    endif()
+    add_custom_target(gen_implib DEPENDS ${implib})
+
+    add_library(node MODULE IMPORTED)
+    set_target_properties(node PROPERTIES
+        IMPORTED_IMPLIB ${implib}
+        IMPORTED_LOCATION ${implib})
+    add_dependencies(node gen_implib)
+endfunction()
+
 if(WIN32)
-    link_directories(${napi-sdk}/lib-win64)
     set(dlfcn
         ${common}/win32-dlfcn.h
         ${common}/win32-dlfcn.c)
@@ -30,6 +59,7 @@ add_library(node-nccc SHARED
 
 # Link settings
 if(WIN32)
+    gen_implib()
     target_link_libraries(node-nccc node)
 elseif(APPLE)
     # Ignore any undefined
