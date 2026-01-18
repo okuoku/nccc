@@ -1,9 +1,9 @@
-if(NOT NCCC_ROOT)
-    set(NCCC_ROOT ${CMAKE_CURRENT_LIST_DIR}/..)
-endif()
-
 cmake_minimum_required(VERSION 3.20)
 project(nccc-tests C)
+
+if(NOT NCCC_ROOT)
+    cmake_path(SET NCCC_ROOT NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/../../..)
+endif()
 
 include(${NCCC_ROOT}/stubsupport/cmake/NcccStubMacros.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/stub_tests_nccc.cmake)
