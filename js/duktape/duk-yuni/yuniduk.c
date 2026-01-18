@@ -77,6 +77,7 @@ copywithin_uint8(duk_context* ctx){
     return 1;
 }
 
+#if 0 // FIXME: Recent Duktape should have one
 /* clz32 */
 static duk_ret_t
 clz32(duk_context* ctx){
@@ -92,6 +93,7 @@ clz32(duk_context* ctx){
     duk_push_number(ctx, ret);
     return 1;
 }
+#endif
 
 static void
 dukload(duk_context* ctx, const char* filename, int flags){
@@ -127,8 +129,10 @@ int main(int argc, char *argv[]) {
     (void)duk_put_prop_string(ctx, -2, "readtext");
     duk_push_c_function(ctx, copywithin_uint8, 3);
     (void)duk_put_prop_string(ctx, -2, "copywithin_uint8");
+#if 0
     duk_push_c_function(ctx, clz32, 1);
     (void)duk_put_prop_string(ctx, -2, "clz32");
+#endif
     (void)duk_put_prop_string(ctx, -2, "BOOTSTRAP");
     (void)duk_put_prop_string(ctx, -1, "global");
     duk_pop(ctx);

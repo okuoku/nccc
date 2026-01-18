@@ -157,7 +157,7 @@ Math.fround = function(){
     abort();
 }
 
-Math.clz32 = BOOTSTRAP.clz32;
+//Math.clz32 = BOOTSTRAP.clz32;
 
 // https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Math/trunc
 if (!Math.trunc) {
