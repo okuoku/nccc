@@ -11,8 +11,31 @@ include_directories(${napi-sdk}/include ${common} ${stubsupport})
 
 add_definitions(-DNAPI_VERSION=4)
 
+function(gen_implib)
+    cmake_path(SET def NORMALIZE ${napi-sdk}/lib/node_api.def)
+    cmake_path(NATIVE_PATH def defN)
+    if(MSVC)
+        set(machine x64) # x86 x64 arm64
+        cmake_path(SET implib NORMALIZE ${CMAKE_CURRENT_BINARY_DIR}/node.lib)
+        cmake_path(NATIVE_PATH implib implibN)
+        add_custom_command(OUTPUT ${implib}
+            COMMAND lib.exe /def:${defN} /machine:${machine} /out:${implibN})
+    else() 
+        # MinGW(binutils)
+        set(dlltool dlltool)
+        cmake_path(SET implib NORMALIZE ${CMAKE_CURRENT_BINARY_DIR}/node.exe.a)
+        cmake_path(NATIVE_PATH implib implibN)
+        add_custom_command(OUTPUT ${implib}
+            COMMAND dlltool -d ${defN} -D node.exe -l ${implibN})
+    endif()
+
+    add_library(node IMPORTED)
+    set_target_properties(node PROPERTIES
+        IMPORTED_IMPLIB ${implib}
+        IMPORTED_LOCATION ${implib})
+endfunction()
+
 if(WIN32)
-    link_directories(${napi-sdk}/lib-win64)
     set(dlfcn
         ${common}/win32-dlfcn.h
         ${common}/win32-dlfcn.c)
@@ -30,6 +53,7 @@ add_library(node-nccc SHARED
 
 # Link settings
 if(WIN32)
+    gen_implib()
     target_link_libraries(node-nccc node)
 elseif(APPLE)
     # Ignore any undefined
