@@ -55,12 +55,13 @@ else()
 endif()
 
 
-add_library(node-nccc SHARED
+add_library(node-nccc MODULE
     node-nccc.c
     ${common}/ncccutils.c
     ${common}/ncccdlfcn.c
     ${dlfcn}
     )
+
 
 # Link settings
 if(WIN32)
@@ -70,6 +71,14 @@ elseif(APPLE)
     # Ignore any undefined
     target_link_options(node-nccc PRIVATE
         -Wl,-undefined,dynamic_lookup)
+
+    # Configure dyld
+    set_target_properties(node-nccc 
+        PROPERTIES
+        MACOSX_RPATH ON
+        BUILD_RPATH "@loader_path"
+        INSTALL_RPATH "@loader_path"
+        BUILD_WITH_INSTALL_RPATH ON)
 endif()
 
 set_target_properties(node-nccc
