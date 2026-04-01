@@ -4,7 +4,12 @@ project(node-nccc C)
 cmake_path(SET reporoot NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/../../..)
 
 cmake_path(SET common NORMALIZE ${reporoot}/common)
-cmake_path(SET napi-sdk NORMALIZE ${reporoot}/../ext/js/node-api-headers)
+if(WITH_NODE_API_HEADERS)
+    cmake_path(SET napi-sdk NORMALIZE ${WITH_NODE_API_HEADERS})
+else()
+    # em2native leftover
+    cmake_path(SET napi-sdk NORMALIZE ${reporoot}/../ext/js/node-api-headers)
+endif()
 cmake_path(SET stubsupport NORMALIZE ${reporoot}/stubsupport)
 
 include_directories(${napi-sdk}/include ${common} ${stubsupport})
